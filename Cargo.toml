@@ -2,3 +2,11 @@
 name = "rmath"
 version = "0.1.0"
 authors = ["Vlad Rindevich <rindevich.vs@gmail.com>"]
+
+[lib]
+name = "rmath"
+crate_type = ["lib","rlib"]
+path = "src/lib.rs"
+
+[dependencies.iterator2d]
+git = "https://github.com/Lodin/iterator2d"
