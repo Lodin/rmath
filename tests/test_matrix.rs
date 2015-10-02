@@ -28,3 +28,23 @@ fn test_matrix_creation_square() {
     assert_eq!(mat2[1][0], 0);
     assert_eq!(mat2[1][1], 2);
 }
+
+#[test]
+fn test_matrix_add_sum() {
+    let mat = Matrix3x3::<i32>::new_filled(&[
+         3, -1, 6,
+         2,  1, 5,
+        -3,  1, 0
+    ]);
+
+    let mat_add_eq = Matrix3x3::<i32>::new_filled(&[
+         6, -2, 12,
+         4,  2, 10,
+        -6,  2,  0 
+    ]); 
+
+    let mat_sub_eq = Matrix3x3::<i32>::new();
+
+    assert_eq!(mat + mat, mat_add_eq);
+    assert_eq!(mat - mat, mat_sub_eq);
+}
