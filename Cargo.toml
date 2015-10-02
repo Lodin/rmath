@@ -8,5 +8,8 @@ name = "rmath"
 crate_type = ["lib","rlib"]
 path = "src/lib.rs"
 
+[dependencies]
+num = "*"
+
 [dependencies.iterator2d]
 git = "https://github.com/Lodin/iterator2d"

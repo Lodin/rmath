@@ -1,39 +1,45 @@
 use iterator2d::Iterator2d;
 use std::slice;
+use std::ops::{ Add, Sub, Mul };
+use num::traits::{ NumCast, Zero };
 
 pub trait Matrix<T>
-    where T: Add + Sub + Mul {
+    where T: Copy + Add + Sub + Mul + NumCast + Zero {
     fn new() -> Self;
-    fn new_identity() -> Self;
     fn new_filled(data: &[T]) -> Self;
     fn iter(&self) -> Iter<T>;
-    fn iter_mut(&mut self) -> IterMut<T>
+    fn iter_mut(&mut self) -> IterMut<T>;
 }
 
 pub trait MatrixSquare<T>
-    where T: Add + Sub + Mul {
+    where T: Copy + Add + Sub + Mul + NumCast + Zero   {
     fn new_identity() -> Self;
     fn new_diag(data: &[T]) -> Self;
 }
 
 pub trait Transposable<T, M>
-    where T: Add + Sub + Mul {
+    where T: Copy + Add + Sub + Mul + NumCast + Zero   {
     fn t(&self) -> M;
 }
 
+
+
 #[macro_export]
 macro_rules! mat {
-    ( $n:ident, $w:ident, $h:ident ) => {
-        pub struct $n<T> {
+    ( $n:ident, $w:expr, $h:expr ) => {
+        #[derive(Copy, Clone, Debug)]
+        pub struct $n<T>
+            where T: Copy + Add + Sub + Mul + NumCast + Zero   {
             data: [T; $w * $h]
         }
 
-        impl<T> Matrix<T> for $n<T> {
+        impl<T> Matrix<T> for $n<T>
+            where T: Copy + Add + Sub + Mul + NumCast + Zero {
             
             #[inline]
             fn new() -> Self {
                 $n {
-                    data: [0; $w * $h]
+                    data: [Zero::zero(); $w * $h]
                 }
             }
             
@@ -41,21 +47,22 @@ macro_rules! mat {
             fn new_filled(data: &[T]) -> Self {
                 if data.len() != $w * $h {
                     panic!("Matrix size should be {}, not {}",
-                           $w * $h, data.len());
+                        $w * $h, data.len());
                 } 
                 
                 let mut mat = Self::new();
-                let mut it = mat.iter_mut().zip(data);
+                {
+                    let it = mat.iter_mut().zip(data);
 
-                for ((mat_el, data_el)) in it {
-                    *mat_el = data_el;
+                    for (mat_el, data_el) in it {
+                        *mat_el = *data_el;
+                    }
                 }
-
                 mat
             }
             
             #[inline]
-            fn iter(&self) -> Iter<'a, T> {
+            fn iter(&self) -> Iter<T> {
                 Iter {
                     iter: self.data.iter(),
                     rows: $h,
@@ -64,7 +71,7 @@ macro_rules! mat {
             }
             
             #[inline]
-            fn iter_mut(&mut self) -> IterMut<'a, T> {
+            fn iter_mut(&mut self) -> IterMut<T> {
                 IterMut {
                     iter: self.data.iter_mut(),
                     rows: $h,
@@ -73,21 +80,25 @@ macro_rules! mat {
             }
         }
 
+       
     };
     ( $n:ident, $s:ident ) => {
         mat!($n, $s, $s);
 
-        impl<T> MatrixSquare<T> for $n<T> {
+        impl<T> MatrixSquare<T> for $n<T>
+            where T: Copy + Add + Sub + Mul + NumCast + Zero   {
 
             #[inline]
             fn new_identity() -> Self {
                 let mut mat = Self::new();
-                let mut it = mat.iter_mut()
-                    .enumerate2d()
-                    .filter(|i, j, el| i == j);
-                
-                for (i, j, el) in it {
-                    *el = 1;
+                {
+                    let mut it = mat.iter_mut()
+                        .enumerate2d()
+                        .filter(|i, j, el| i == j);
+                    
+                    for (i, j, el) in it {
+                        *el = cast(1).unwrap();
+                    }
                 }
                 mat
             }
@@ -100,13 +111,15 @@ macro_rules! mat {
                 }
 
                 let mut mat = Self::new();
-                let mut it = mat.iter_mut()
-                    .enumerate2d()
-                    .filter(|i, j, el| i == j)
-                    .zip(&data);
+                {
+                    let mut it = mat.iter_mut()
+                        .enumerate2d()
+                        .filter(|i, j, el| i == j)
+                        .zip(&data);
 
-                for (i, j, (mat_el, data_el)) in it {
-                    *mat_el = data_el;
+                    for ((_, _, mat_el), data_el) in it {
+                        *mat_el = *data_el;
+                    }
                 }
                 mat
             }
@@ -114,22 +127,12 @@ macro_rules! mat {
     }
 }
 
-macro_rules! iterator2d {
-    ( struct $name:ident, struct $iter:ident, $t:ty ) => {
-        impl<T> $name<T> {
-            
-            #[inline]
-            pub fn new(iter: $iter<T>, rows: usize, cols: usize)
-                -> $name<T> {
-                $name {
-                    iter: iter,
-                    rows: rows,
-                    cols: cols
-                }
-            }
-        }
+mat!(Matrix3x3, 3, 3);
 
-        impl<T> Iterator2d for $name<T> {
+macro_rules! iterator2d {
+    ( struct $name:ident, struct $iter:path, $t:ty ) => {
+        
+        impl<'a, T> Iterator2d for $name<'a, T> {
     
             #[inline]
             fn rows(&self) -> usize {
@@ -142,7 +145,7 @@ macro_rules! iterator2d {
             }
         }
 
-        impl<T> Iterator for $name<T> {
+        impl<'a, T> Iterator for $name<'a, T> {
             type Item = $t;
 
             #[inline]
