@@ -1,10 +1,10 @@
 use iterator2d::Iterator2d;
 use std::slice;
 use std::ops::{ Add, Sub, Mul, Index, IndexMut };
-use num::traits::{ Zero };
+use num::traits::{ cast, NumCast, Zero };
 
 pub trait Matrix<T>
-    where T: Copy + Add + Sub + Mul + Zero {
+    where T: Copy + Add + Sub + Mul + NumCast + Zero {
     fn new() -> Self;
     fn new_filled(data: &[T]) -> Self;
     fn iter(&self) -> Iter<T>;
@@ -12,13 +12,13 @@ pub trait Matrix<T>
 }
 
 pub trait MatrixSquare<T>
-    where T: Copy + Add + Sub + Mul + Zero   {
+    where T: Copy + Add + Sub + Mul + NumCast + Zero   {
     fn new_identity() -> Self;
     fn new_diag(data: &[T]) -> Self;
 }
 
 pub trait Transposable<T, M>
-    where T: Copy + Add + Sub + Mul + Zero   {
+    where T: Copy + Add + Sub + Mul + NumCast + Zero   {
     fn t(&self) -> M;
 }
 
@@ -27,12 +27,12 @@ macro_rules! mat {
     ( $n:ident, $w:expr, $h:expr ) => {
         #[derive(Copy, Clone, Debug)]
         pub struct $n<T>
-            where T: Copy + Add + Sub + Mul + Zero   {
+            where T: Copy + Add + Sub + Mul + NumCast + Zero   {
             data: [T; $w * $h]
         }
 
         impl<T> Matrix<T> for $n<T>
-            where T: Copy + Add + Sub + Mul + Zero {
+            where T: Copy + Add + Sub + Mul + NumCast + Zero {
             
             #[inline]
             fn new() -> Self {
@@ -79,7 +79,7 @@ macro_rules! mat {
         }
 
         impl<T> Index<usize> for $n<T>
-            where T:  Copy + Add + Sub + Mul + Zero {
+            where T:  Copy + Add + Sub + Mul + NumCast + Zero {
             type Output = [T];
         
             #[inline]
@@ -89,7 +89,7 @@ macro_rules! mat {
         }    
 
         impl<T> IndexMut<usize> for $n<T>
-            where T: Copy + Add + Sub + Mul + Zero {
+            where T: Copy + Add + Sub + Mul + NumCast + Zero {
             
             #[inline]
             fn index_mut<'a>(&'a mut self, row: usize) -> &'a mut [T] {
@@ -97,21 +97,21 @@ macro_rules! mat {
             }
         }
     };
-    ( $n:ident, $s:ident ) => {
+    ( $n:ident, $s:expr ) => {
         mat!($n, $s, $s);
 
         impl<T> MatrixSquare<T> for $n<T>
-            where T: Copy + Add + Sub + Mul + Zero   {
+            where T: Copy + Add + Sub + Mul + NumCast + Zero   {
 
             #[inline]
             fn new_identity() -> Self {
                 let mut mat = Self::new();
                 {
-                    let mut it = mat.iter_mut()
+                    let it = mat.iter_mut()
                         .enumerate2d()
-                        .filter(|i, j, el| i == j);
+                        .filter(|&(i, j, _)| i == j);
                     
-                    for (i, j, el) in it {
+                    for (_, _, el) in it {
                         *el = cast(1).unwrap();
                     }
                 }
@@ -119,7 +119,7 @@ macro_rules! mat {
             }
             
             #[inline]
-            fn new_diag(data: &[T]) {
+            fn new_diag(data: &[T]) -> Self {
                 if data.len() != $s {
                     panic!("Matrix diagonal length is {}, not {}",
                           $s, data.len())
@@ -127,10 +127,10 @@ macro_rules! mat {
 
                 let mut mat = Self::new();
                 {
-                    let mut it = mat.iter_mut()
+                    let it = mat.iter_mut()
                         .enumerate2d()
-                        .filter(|i, j, el| i == j)
-                        .zip(&data);
+                        .filter(|&(i, j, _)| i == j)
+                        .zip(data);
 
                     for ((_, _, mat_el), data_el) in it {
                         *mat_el = *data_el;
@@ -142,7 +142,7 @@ macro_rules! mat {
     }
 }
 
-mat!(Matrix3x3, 3, 3);
+mat!(Matrix3x3, 3);
 
 macro_rules! iterator2d {
     ( struct $name:ident, struct $iter:path, $t:ty ) => {
