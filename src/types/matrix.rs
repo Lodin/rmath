@@ -1,10 +1,10 @@
 use iterator2d::Iterator2d;
 use std::slice;
-use std::ops::{ Add, Sub, Mul };
-use num::traits::{ NumCast, Zero };
+use std::ops::{ Add, Sub, Mul, Index, IndexMut };
+use num::traits::{ Zero };
 
 pub trait Matrix<T>
-    where T: Copy + Add + Sub + Mul + NumCast + Zero {
+    where T: Copy + Add + Sub + Mul + Zero {
     fn new() -> Self;
     fn new_filled(data: &[T]) -> Self;
     fn iter(&self) -> Iter<T>;
@@ -12,29 +12,27 @@ pub trait Matrix<T>
 }
 
 pub trait MatrixSquare<T>
-    where T: Copy + Add + Sub + Mul + NumCast + Zero   {
+    where T: Copy + Add + Sub + Mul + Zero   {
     fn new_identity() -> Self;
     fn new_diag(data: &[T]) -> Self;
 }
 
 pub trait Transposable<T, M>
-    where T: Copy + Add + Sub + Mul + NumCast + Zero   {
+    where T: Copy + Add + Sub + Mul + Zero   {
     fn t(&self) -> M;
 }
-
-
 
 #[macro_export]
 macro_rules! mat {
     ( $n:ident, $w:expr, $h:expr ) => {
         #[derive(Copy, Clone, Debug)]
         pub struct $n<T>
-            where T: Copy + Add + Sub + Mul + NumCast + Zero   {
+            where T: Copy + Add + Sub + Mul + Zero   {
             data: [T; $w * $h]
         }
 
         impl<T> Matrix<T> for $n<T>
-            where T: Copy + Add + Sub + Mul + NumCast + Zero {
+            where T: Copy + Add + Sub + Mul + Zero {
             
             #[inline]
             fn new() -> Self {
@@ -80,13 +78,30 @@ macro_rules! mat {
             }
         }
 
-       
+        impl<T> Index<usize> for $n<T>
+            where T:  Copy + Add + Sub + Mul + Zero {
+            type Output = [T];
+        
+            #[inline]
+            fn index<'a>(&'a self, row: usize) -> &'a [T] {
+                &self.data[$w * row .. $w + $w * row]
+            }
+        }    
+
+        impl<T> IndexMut<usize> for $n<T>
+            where T: Copy + Add + Sub + Mul + Zero {
+            
+            #[inline]
+            fn index_mut<'a>(&'a mut self, row: usize) -> &'a mut [T] {
+                &mut self.data[$w * row .. $w + $w * row]
+            }
+        }
     };
     ( $n:ident, $s:ident ) => {
         mat!($n, $s, $s);
 
         impl<T> MatrixSquare<T> for $n<T>
-            where T: Copy + Add + Sub + Mul + NumCast + Zero   {
+            where T: Copy + Add + Sub + Mul + Zero   {
 
             #[inline]
             fn new_identity() -> Self {
