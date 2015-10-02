@@ -7,6 +7,10 @@ pub trait Matrix<T>
     where T: Copy + Add + Sub + Mul + NumCast + Zero {
     fn new() -> Self;
     fn new_filled(data: &[T]) -> Self;
+
+    fn cols() -> usize;
+    fn rows() -> usize;
+
     fn iter(&self) -> Iter<T>;
     fn iter_mut(&mut self) -> IterMut<T>;
 }
@@ -25,7 +29,7 @@ pub trait Transposable<T, M>
 #[macro_export]
 macro_rules! mat {
     ( $n:ident, $w:expr, $h:expr ) => {
-        #[derive(Copy, Clone, Debug)]
+        #[derive(Copy, Clone, Debug, PartialEq)]
         pub struct $n<T>
             where T: Copy + Add + Sub + Mul + NumCast + Zero   {
             data: [T; $w * $h]
@@ -57,6 +61,14 @@ macro_rules! mat {
                     }
                 }
                 mat
+            }
+            
+            fn cols() -> usize {
+                $w
+            }
+
+            fn rows() -> usize {
+                $h
             }
             
             #[inline]
@@ -94,6 +106,38 @@ macro_rules! mat {
             #[inline]
             fn index_mut<'a>(&'a mut self, row: usize) -> &'a mut [T] {
                 &mut self.data[$w * row .. $w + $w * row]
+            }
+        }
+
+        impl<T> Add for $n<T>
+            where T: Copy + Add<Output=T> + Sub + Mul + NumCast + Zero {
+            type Output = Self;
+            
+            #[inline]
+            fn add(self, rhs: Self) -> Self {
+                let mut mat = Self::new(); {
+                    let it = mat.data.iter_mut().zip(&self.data).zip(&rhs.data);
+                    for ((res, first), second) in it {
+                        *res = *first + *second;
+                    }
+                }
+                mat
+            }
+        }
+
+        impl<T> Sub for $n<T>
+            where T: Copy + Add + Sub<Output=T> + Mul + NumCast + Zero {
+            type Output = Self;
+
+            #[inline]
+            fn sub(self, rhs: Self) -> Self {
+                let mut mat = Self::new(); {
+                    let it = mat.data.iter_mut().zip(&self.data).zip(&rhs.data);
+                    for ((res, first), second) in it {
+                        *res = *first - *second;
+                    }
+                }
+                mat
             }
         }
     };
