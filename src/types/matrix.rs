@@ -3,8 +3,7 @@ use std::slice;
 use std::ops::{ Add, Sub, Mul, Index, IndexMut };
 use num::traits::{ cast, NumCast, Zero };
 
-pub trait Matrix<T>
-    where T: Copy + Add + Sub + Mul + NumCast + Zero {
+pub trait Matrix<T> where T: Copy {
     fn new() -> Self;
     fn new_filled(data: &[T]) -> Self;
 
@@ -15,14 +14,12 @@ pub trait Matrix<T>
     fn iter_mut(&mut self) -> IterMut<T>;
 }
 
-pub trait MatrixSquare<T>
-    where T: Copy + Add + Sub + Mul + NumCast + Zero   {
+pub trait MatrixSquare<T> where T: Copy {
     fn new_identity() -> Self;
     fn new_diag(data: &[T]) -> Self;
 }
 
-pub trait Transposable<T, M>
-    where T: Copy + Add + Sub + Mul + NumCast + Zero   {
+pub trait Transposable<T, M> where T: Copy {
     fn t(&self) -> M;
 }
 
@@ -30,13 +27,12 @@ pub trait Transposable<T, M>
 macro_rules! mat {
     ( $n:ident, $w:expr, $h:expr ) => {
         #[derive(Copy, Clone, Debug, PartialEq)]
-        pub struct $n<T>
-            where T: Copy + Add + Sub + Mul + NumCast + Zero   {
+        pub struct $n<T> where T: Copy {
             data: [T; $w * $h]
         }
 
         impl<T> Matrix<T> for $n<T>
-            where T: Copy + Add + Sub + Mul + NumCast + Zero {
+            where T: Copy + Zero {
             
             #[inline]
             fn new() -> Self {
@@ -52,8 +48,7 @@ macro_rules! mat {
                         $w * $h, data.len());
                 } 
                 
-                let mut mat = Self::new();
-                {
+                let mut mat = Self::new(); {
                     let it = mat.iter_mut().zip(data);
 
                     for (mat_el, data_el) in it {
@@ -63,10 +58,12 @@ macro_rules! mat {
                 mat
             }
             
+            #[inline]
             fn cols() -> usize {
                 $w
             }
-
+            
+            #[inline]
             fn rows() -> usize {
                 $h
             }
@@ -90,8 +87,7 @@ macro_rules! mat {
             }
         }
 
-        impl<T> Index<usize> for $n<T>
-            where T:  Copy + Add + Sub + Mul + NumCast + Zero {
+        impl<T> Index<usize> for $n<T> where T: Copy {
             type Output = [T];
         
             #[inline]
@@ -100,8 +96,7 @@ macro_rules! mat {
             }
         }    
 
-        impl<T> IndexMut<usize> for $n<T>
-            where T: Copy + Add + Sub + Mul + NumCast + Zero {
+        impl<T> IndexMut<usize> for $n<T> where T: Copy {
             
             #[inline]
             fn index_mut<'a>(&'a mut self, row: usize) -> &'a mut [T] {
@@ -109,14 +104,16 @@ macro_rules! mat {
             }
         }
 
-        impl<T> Add for $n<T>
-            where T: Copy + Add<Output=T> + Sub + Mul + NumCast + Zero {
+        impl<T> Add for $n<T> where T: Copy + Zero + Add<Output=T> {
             type Output = Self;
             
             #[inline]
             fn add(self, rhs: Self) -> Self {
                 let mut mat = Self::new(); {
-                    let it = mat.data.iter_mut().zip(&self.data).zip(&rhs.data);
+                    let it = mat.data.iter_mut()
+                        .zip(&self.data)
+                        .zip(&rhs.data);
+
                     for ((res, first), second) in it {
                         *res = *first + *second;
                     }
@@ -125,14 +122,16 @@ macro_rules! mat {
             }
         }
 
-        impl<T> Sub for $n<T>
-            where T: Copy + Add + Sub<Output=T> + Mul + NumCast + Zero {
+        impl<T> Sub for $n<T> where T: Copy + Zero + Sub<Output=T> {
             type Output = Self;
 
             #[inline]
             fn sub(self, rhs: Self) -> Self {
                 let mut mat = Self::new(); {
-                    let it = mat.data.iter_mut().zip(&self.data).zip(&rhs.data);
+                    let it = mat.data.iter_mut()
+                        .zip(&self.data)
+                        .zip(&rhs.data);
+
                     for ((res, first), second) in it {
                         *res = *first - *second;
                     }
@@ -144,13 +143,11 @@ macro_rules! mat {
     ( $n:ident, $s:expr ) => {
         mat!($n, $s, $s);
 
-        impl<T> MatrixSquare<T> for $n<T>
-            where T: Copy + Add + Sub + Mul + NumCast + Zero   {
+        impl<T> MatrixSquare<T> for $n<T> where T: Copy + NumCast + Zero   {
 
             #[inline]
             fn new_identity() -> Self {
-                let mut mat = Self::new();
-                {
+                let mut mat = Self::new(); {
                     let it = mat.iter_mut()
                         .enumerate2d()
                         .filter(|&(i, j, _)| i == j);
@@ -169,8 +166,7 @@ macro_rules! mat {
                           $s, data.len())
                 }
 
-                let mut mat = Self::new();
-                {
+                let mut mat = Self::new(); {
                     let it = mat.iter_mut()
                         .enumerate2d()
                         .filter(|&(i, j, _)| i == j)
