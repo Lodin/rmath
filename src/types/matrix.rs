@@ -43,11 +43,8 @@ macro_rules! mat {
             
             #[inline]
             fn new_filled(data: &[T]) -> Self {
-                if data.len() != $w * $h {
-                    panic!("Matrix size should be {}, not {}",
-                        $w * $h, data.len());
-                } 
-                
+                assert!(data.len() == $w * $h);
+
                 let mut mat = Self::new(); {
                     let it = mat.iter_mut().zip(data);
 
@@ -161,10 +158,7 @@ macro_rules! mat {
             
             #[inline]
             fn new_diag(data: &[T]) -> Self {
-                if data.len() != $s {
-                    panic!("Matrix diagonal length is {}, not {}",
-                          $s, data.len())
-                }
+                assert!(data.len() == $s);
 
                 let mut mat = Self::new(); {
                     let it = mat.iter_mut()
@@ -182,7 +176,50 @@ macro_rules! mat {
     }
 }
 
+#[macro_export]
+macro_rules! mat_mul {
+    ( $f:ident, $s:ident, $res:ident ) => {
+        impl<T> Mul for $f<T>
+            where T: Copy + Zero + Mul<Output=T>,
+                  $f<T>: Matrix<T>,
+                  $s<T>: Matrix<T>,
+                  $res<T>: Matrix<T> {
+            type Output = $res<T>;
+
+            #[inline]
+            fn mul(self, rhs: $s<T>) -> $res<T> {
+                assert!(Self::cols() == $s::rows()
+                        && Self::rows() == $res::rows()
+                        && $s::cols() == $res::cols());
+                
+                let mut mat = $res::new(); {
+                    let it = mat.iter_mut().enumerate2d();
+
+                    for (i, j, el) in it {
+                        for k in (0..Self::cols()) {
+                            *el = *el + self[i][k] * rhs[k][j]
+                        }
+                    }
+                }
+
+                mat
+            }
+        }
+    };
+    ( $m:ident ) => {
+        mat_mul!($m, $m, $m);
+    }
+}
+
+mat!(Matrix1x1, 1);
+mat!(Matrix2x2, 2);
 mat!(Matrix3x3, 3);
+mat!(Matrix4x4, 4);
+
+mat_mul!(Matrix1x1);
+mat_mul!(Matrix2x2);
+mat_mul!(Matrix3x3);
+mat_mul!(Matrix4x4);
 
 macro_rules! iterator2d {
     ( struct $name:ident, struct $iter:path, $t:ty ) => {
