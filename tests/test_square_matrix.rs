@@ -1,13 +1,18 @@
 extern crate rmath;
 use rmath::types::matrix::{ Matrix, MatrixSquare, Matrix3x3 };
 
-#[test]
-fn test_matrix_creation_simple() {
-    let mat = Matrix3x3::<i32>::new_filled(&[
+#[inline]
+fn new_matrix() -> Matrix3x3<i32> {
+    Matrix3x3::<i32>::new_filled(&[
          3, -1, 6,
          2,  1, 5,
         -3,  1, 0
-    ]);
+    ])
+}
+
+#[test]
+fn test_matrix_creation_simple() {
+    let mat = new_matrix();
 
     assert_eq!(mat[2][0], -3);
 }
@@ -31,11 +36,7 @@ fn test_matrix_creation_square() {
 
 #[test]
 fn test_matrix_add_sum() {
-    let mat = Matrix3x3::<i32>::new_filled(&[
-         3, -1, 6,
-         2,  1, 5,
-        -3,  1, 0
-    ]);
+    let mat = new_matrix();
 
     let mat_add_eq = Matrix3x3::<i32>::new_filled(&[
          6, -2, 12,
@@ -47,4 +48,17 @@ fn test_matrix_add_sum() {
 
     assert_eq!(mat + mat, mat_add_eq);
     assert_eq!(mat - mat, mat_sub_eq);
+}
+
+#[test]
+fn test_matrix_mul() {
+    let mat = new_matrix(); 
+
+    let mat_mul_eq = Matrix3x3::<i32>::new_filled(&[
+        -11, 2,  13,
+         -7, 4,  17,
+         -7, 4, -13
+    ]);
+
+    assert_eq!(mat * mat, mat_mul_eq);
 }
