@@ -23,7 +23,6 @@ pub trait Transposable<T, M> where T: Copy {
     fn t(&self) -> M;
 }
 
-#[macro_export]
 macro_rules! mat {
     ( $n:ident, $w:expr, $h:expr ) => {
         #[derive(Copy, Clone, Debug, PartialEq)]
@@ -176,10 +175,9 @@ macro_rules! mat {
     }
 }
 
-#[macro_export]
 macro_rules! mat_mul {
     ( $f:ident, $s:ident, $res:ident ) => {
-        impl<T> Mul for $f<T>
+        impl<T> Mul<$s<T>> for $f<T>
             where T: Copy + Zero + Mul<Output=T>,
                   $f<T>: Matrix<T>,
                   $s<T>: Matrix<T>,
@@ -211,19 +209,22 @@ macro_rules! mat_mul {
     }
 }
 
-mat!(Matrix1x1, 1);
-mat!(Matrix2x2, 2);
-mat!(Matrix3x3, 3);
-mat!(Matrix4x4, 4);
+mat!(Mat1, 1);
+mat!(Mat2, 2);
+mat!(Mat3, 3);
+mat!(Mat4, 4);
+mat!(Mat5, 5);
+mat!(Mat6, 6);
 
-mat_mul!(Matrix1x1);
-mat_mul!(Matrix2x2);
-mat_mul!(Matrix3x3);
-mat_mul!(Matrix4x4);
+mat_mul!(Mat1);
+mat_mul!(Mat2);
+mat_mul!(Mat3);
+mat_mul!(Mat4);
+mat_mul!(Mat5);
+mat_mul!(Mat6);
 
 macro_rules! iterator2d {
-    ( struct $name:ident, struct $iter:path, $t:ty ) => {
-        
+    ( struct $name:ident, $t:ty ) => {
         impl<'a, T> Iterator2d for $name<'a, T> {
     
             #[inline]
@@ -269,7 +270,8 @@ pub struct Iter<'a, T: 'a> {
     cols: usize
 }
 
-iterator2d!(struct Iter, struct slice::Iter, &'a T);
+
+iterator2d!(struct Iter, &'a T);
 
 pub struct IterMut<'a, T: 'a> {
     iter: slice::IterMut<'a, T>,
@@ -277,4 +279,4 @@ pub struct IterMut<'a, T: 'a> {
     cols: usize
 }
 
-iterator2d!(struct IterMut, struct slice::IterMut, &'a mut T);
+iterator2d!(struct IterMut, &'a mut T);
