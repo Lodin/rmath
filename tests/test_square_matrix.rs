@@ -1,5 +1,6 @@
 extern crate rmath;
-use rmath::types::matrix::{ Mat3 };
+use rmath::traits::structure::{ Matrix, MatrixSquare, Transposable };
+use rmath::structs::mat::{ Mat3 };
 
 #[inline]
 fn new_matrix() -> Mat3<i32> {
@@ -32,6 +33,15 @@ fn test_matrix_creation_square() {
     assert_eq!(mat2[0][1], 0);
     assert_eq!(mat2[1][0], 0);
     assert_eq!(mat2[1][1], 2);
+}
+
+#[test]
+fn test_matrix_transposition() {
+    let mat = new_matrix();
+    let mat_t = mat.t();
+
+    assert_eq!(mat[0][1], mat_t[1][0]);
+    assert_eq!(mat[2][1], mat_t[1][2]);
 }
 
 #[test]

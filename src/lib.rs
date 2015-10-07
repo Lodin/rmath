@@ -5,6 +5,10 @@
 extern crate iterator2d;
 extern crate num;
 
-pub mod types;
+pub mod macros;
+pub mod structs;
+pub mod traits;
 
-pub use self::types::*;
+pub use self::macros::*;
+pub use self::structs::*;
+pub use self::traits::*;

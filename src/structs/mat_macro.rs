@@ -1,30 +1,6 @@
-use iterator2d::Iterator2d;
-use std::slice;
-use std::ops::{ Add, Sub, Mul, Index, IndexMut };
-use num::traits::{ cast, NumCast, Zero };
-
-pub trait Matrix<T> where T: Copy {
-    fn new() -> Self;
-    fn new_filled(data: &[T]) -> Self;
-
-    fn cols() -> usize;
-    fn rows() -> usize;
-
-    fn iter(&self) -> Iter<T>;
-    fn iter_mut(&mut self) -> IterMut<T>;
-}
-
-pub trait MatrixSquare<T> where T: Copy {
-    fn new_identity() -> Self;
-    fn new_diag(data: &[T]) -> Self;
-}
-
-pub trait Transposable<T, M> where T: Copy {
-    fn t(&self) -> M;
-}
-
+#[macro_export]
 macro_rules! mat {
-    ( $n:ident, $w:expr, $h:expr ) => {
+    ( $n:ident, $h:expr, $w:expr ) => {
         #[derive(Copy, Clone, Debug, PartialEq)]
         pub struct $n<T> where T: Copy {
             data: [T; $w * $h]
@@ -66,20 +42,20 @@ macro_rules! mat {
             
             #[inline]
             fn iter(&self) -> Iter<T> {
-                Iter {
-                    iter: self.data.iter(),
-                    rows: $h,
-                    cols: $w
-                }
+                Iter::new(
+                    self.data.iter(),
+                    $h,
+                    $w
+                )
             }
             
             #[inline]
             fn iter_mut(&mut self) -> IterMut<T> {
-                IterMut {
-                    iter: self.data.iter_mut(),
-                    rows: $h,
-                    cols: $w
-                }
+                IterMut::new(
+                    self.data.iter_mut(),
+                    $h,
+                    $w
+                )
             }
         }
 
@@ -175,6 +151,35 @@ macro_rules! mat {
     }
 }
 
+#[macro_export]
+macro_rules! mat_t {
+    ( $m:ident, $res:ident ) => {
+        impl<T> Transposable for $m
+            where T: Copy + Zero, $res: Matrix {
+            
+            #[inline]
+            fn t(&self) -> $res {
+                assert!(self.rows() == $res.cols()
+                    && self.cols() == $res.rows());
+
+                let mut mat = $res::new(); {
+                    let it = mat.iter_mut().enumerate2d();
+
+                    for (i, j, el) in it {
+                        *el = self[j][i];
+                    }
+                }
+
+                mat
+            }
+        }
+    };
+    ( $m:ident ) => {
+        mat_t!($m, $m);
+    }
+}
+
+#[macro_export]
 macro_rules! mat_mul {
     ( $f:ident, $s:ident, $res:ident ) => {
         impl<T> Mul<$s<T>> for $f<T>
@@ -208,75 +213,3 @@ macro_rules! mat_mul {
         mat_mul!($m, $m, $m);
     }
 }
-
-mat!(Mat1, 1);
-mat!(Mat2, 2);
-mat!(Mat3, 3);
-mat!(Mat4, 4);
-mat!(Mat5, 5);
-mat!(Mat6, 6);
-
-mat_mul!(Mat1);
-mat_mul!(Mat2);
-mat_mul!(Mat3);
-mat_mul!(Mat4);
-mat_mul!(Mat5);
-mat_mul!(Mat6);
-
-macro_rules! iterator2d {
-    ( struct $name:ident, $t:ty ) => {
-        impl<'a, T> Iterator2d for $name<'a, T> {
-    
-            #[inline]
-            fn rows(&self) -> usize {
-                self.rows
-            }
-
-            #[inline]
-            fn cols(&self) -> usize {
-                self.cols
-            }
-        }
-
-        impl<'a, T> Iterator for $name<'a, T> {
-            type Item = $t;
-
-            #[inline]
-            fn next(&mut self) -> Option<Self::Item> {
-                self.iter.next()
-            }
-
-            #[inline]
-            fn size_hint(&self) -> (usize, Option<usize>) {
-                self.iter.size_hint()
-            }
-
-            #[inline]
-            fn nth(&mut self, n: usize) -> Option<Self::Item> {
-                self.iter.nth(n)
-            }
-
-            #[inline]
-            fn count(self) -> usize {
-                self.iter.count()
-            }
-        } 
-    }
-}
-
-pub struct Iter<'a, T: 'a> {
-    iter: slice::Iter<'a, T>,
-    rows: usize,
-    cols: usize
-}
-
-
-iterator2d!(struct Iter, &'a T);
-
-pub struct IterMut<'a, T: 'a> {
-    iter: slice::IterMut<'a, T>,
-    rows: usize,
-    cols: usize
-}
-
-iterator2d!(struct IterMut, &'a mut T);
