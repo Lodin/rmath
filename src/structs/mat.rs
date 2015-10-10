@@ -1,4 +1,8 @@
-use self::iter::{ Iter, IterMut }; 
+use iter::{ Iter, IterMut }; 
+use traits::structure::{ Matrix, MatrixSquare, Transposable };
+use iterator2d::Iterator2d;
+use std::ops::{ Add, Sub, Mul, Index, IndexMut };
+use num::traits::{ Zero, NumCast, cast };
 
 mat!(Mat1, 1);
 mat!(Mat2, 2);

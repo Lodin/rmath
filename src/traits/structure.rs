@@ -1,4 +1,4 @@
-use structs::mat::{ Iter, IterMut };
+use structs::iter::{ Iter, IterMut };
 
 pub trait Matrix<T> where T: Copy {
     fn new() -> Self;

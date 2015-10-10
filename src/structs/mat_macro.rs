@@ -1,3 +1,5 @@
+#![macro_use]
+
 #[macro_export]
 macro_rules! mat {
     ( $n:ident, $h:expr, $w:expr ) => {
@@ -154,13 +156,13 @@ macro_rules! mat {
 #[macro_export]
 macro_rules! mat_t {
     ( $m:ident, $res:ident ) => {
-        impl<T> Transposable for $m
-            where T: Copy + Zero, $res: Matrix {
+        impl<T> Transposable<$m<T>, $res<T>> for $m<T>
+            where T: Copy + Zero, $res<T>: Matrix<T> {
             
             #[inline]
-            fn t(&self) -> $res {
-                assert!(self.rows() == $res.cols()
-                    && self.cols() == $res.rows());
+            fn t(&self) -> $res<T> {
+                assert!(Self::rows() == $res::cols()
+                    && Self::cols() == $res::rows());
 
                 let mut mat = $res::new(); {
                     let it = mat.iter_mut().enumerate2d();
@@ -199,7 +201,7 @@ macro_rules! mat_mul {
                     let it = mat.iter_mut().enumerate2d();
 
                     for (i, j, el) in it {
-                        for k in (0..Self::cols()) {
+                        for k in 0..Self::cols() {
                             *el = *el + self[i][k] * rhs[k][j]
                         }
                     }
