@@ -1,6 +1,6 @@
 extern crate rmath;
-use rmath::traits::structure::{ Matrix, MatrixSquare, Transposable };
-use rmath::structs::mat::{ Mat3 };
+use rmath::traits::structure::{Matrix, MatrixSquare, Transposable};
+use rmath::structs::mat::{Mat3};
 
 #[inline]
 fn new_matrix() -> Mat3<i32> {
@@ -45,7 +45,7 @@ fn test_matrix_transposition() {
 }
 
 #[test]
-fn test_matrix_add_sum() {
+fn test_matrix_add_sub() {
     let mat = new_matrix();
 
     let mat_add_eq = Mat3::<i32>::new_filled(&[
