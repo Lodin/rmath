@@ -4,6 +4,7 @@
 
 extern crate iterator2d;
 extern crate num;
+extern crate rand;
 
 pub mod structs;
 pub mod traits;

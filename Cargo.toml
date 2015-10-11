@@ -10,6 +10,7 @@ path = "src/lib.rs"
 
 [dependencies]
 num = "*"
+rand = "*"
 
 [dependencies.iterator2d]
 git = "https://github.com/Lodin/iterator2d"

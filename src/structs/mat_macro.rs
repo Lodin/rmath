@@ -113,6 +113,19 @@ macro_rules! mat {
                 mat
             }
         }
+
+        impl<T> Rand for $n<T> where T: Copy + Zero + Rand {
+            #[inline]
+            fn rand<R: Rng>(rng: &mut R) -> $n<T> { 
+                let mut mat = $n::new();
+                
+                for el in mat.iter_mut() {
+                    *el = rng.gen();
+                }
+
+                mat
+            }
+        }
     };
     ( $n:ident, $s:expr ) => {
         mat!($n, $s, $s);
@@ -213,5 +226,11 @@ macro_rules! mat_mul {
     };
     ( $m:ident ) => {
         mat_mul!($m, $m, $m);
+    }
+}
+
+macro_rules! rand_impl {
+    ( $m:ident ) => {
+         
     }
 }

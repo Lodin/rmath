@@ -1,5 +1,5 @@
 use iterator2d::Iterator2d;
-use std::slice::{ Iter as SliceIter, IterMut as SliceIterMut };
+use std::slice::{Iter as SliceIter, IterMut as SliceIterMut};
 
 pub struct Iter<'a, T: 'a> {
     iter: SliceIter<'a, T>,
@@ -18,7 +18,7 @@ macro_rules! iterator2d {
         impl<'a, T> $name<'a, T> {
 
             #[inline]
-            fn new(iter: $iter<'a, T>, rows: usize, cols: usize) -> Self {
+            pub fn new(iter: $iter<'a, T>, rows: usize, cols: usize) -> Self {
                 $name {
                     iter: iter,
                     rows: rows,
